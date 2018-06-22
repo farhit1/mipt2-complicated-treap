@@ -2,6 +2,8 @@
 #include <vector>
 #include <functional>
 #include <memory>
+#include <random>
+#include <time.h>
 using namespace std;
 
 
@@ -11,9 +13,11 @@ public:
     typedef long long   prior_type;
     typedef size_t      size_type;
     typedef Node*       node_ptr;
+    typedef mt19937     randomizer;
 
 private:
     static const long long INF = 1e15;
+    static randomizer rand;
 
     size_type subtreeNodes;
     prior_type prior;
@@ -282,11 +286,24 @@ public:
         return t->val;
     }
 
+    typedef std::function<void(node_ptr&)> operation_type;
+
+    static void operationOnSubsegment(node_ptr& t, size_t l, size_t r, const operation_type& operation) {
+        auto x = Node::split(t, l);
+        auto y = Node::split(x.second, r - l + 1);
+        operation(y.first);
+        t = Node::merge(x.first, y.first, y.second);
+    }
+
     ~Node() {
         delete l;
         delete r;
     }
 };
+
+Node::randomizer Node::rand = randomizer(0);
+
+typedef Node::node_ptr Tree;
 
 
 class Operation {
@@ -310,7 +327,7 @@ class Task {
             t(nullptr) {}
 
 public:
-    Node* t;
+    Tree t;
     std::vector<std::unique_ptr<Operation::Base>> queries;
     std::vector<long long> result;
 
@@ -351,12 +368,9 @@ public:
             r(r) {}
 
     void handle() const override {
-        Node*& t = Task::get().t;
-
-        auto x = Node::split(t, l);
-        auto y = Node::split(x.second, r - l + 1);
-        Task::get().result.push_back(Node::getSum(y.first));
-        t = Node::merge(x.first, y.first, y.second);
+        Node::operationOnSubsegment(Task::get().t, l, r, [this](Tree& t) {
+            Task::get().result.push_back(Node::getSum(t));
+        });
     }
 };
 
@@ -370,9 +384,7 @@ public:
             at(at) {}
 
     void handle() const override {
-        Node*& t = Task::get().t;
-
-        Node::insert(t, x, at);
+        Node::insert(Task::get().t, x, at);
     }
 };
 
@@ -384,9 +396,7 @@ public:
             pos(pos) {}
 
     void handle() const override {
-        Node*& t = Task::get().t;
-
-        Node::erase(t, pos);
+        Node::erase(Task::get().t, pos);
     }
 };
 
@@ -407,17 +417,12 @@ public:
             r(r) {}
 
     void handle() const override {
-        Node*& t = Task::get().t;
-
-        auto e = Node::split(t, l);
-        auto f = Node::split(e.second, r - l + 1);
-
-        Node::Push::Type opertype = (tp == type::set ?
-                                     Node::Push::Type::set :
-                                     Node::Push::Type::add);
-        Node::addPush(f.first, Node::Push(opertype, x));
-
-        t = Node::merge(e.first, f.first, f.second);
+        Node::operationOnSubsegment(Task::get().t, l, r, [this](Tree& t) {
+            Node::Push::Type opertype = (tp == type::set ?
+                                         Node::Push::Type::set :
+                                         Node::Push::Type::add);
+            Node::addPush(t, Node::Push(opertype, x));
+        });
     }
 };
 
@@ -452,58 +457,55 @@ public:
             r(r) {}
 
     void handle() const override {
-        Node*& t = Task::get().t;
+        Node::operationOnSubsegment(Task::get().t, l, r, [this](Tree& t) {
+            std::function<bool(const Node*)> splitcnd;
+            if (tp == type::prev) {
+                long long vall = Node::INF;
+                splitcnd = [&vall](const Node* t) {
+                    bool ans = ((!t->r && t->val <= vall) ||
+                                (t->r && t->r->isIncreasing && t->val <= t->r->lowest && t->r->highest <= vall));
+                    if (ans)
+                        vall = t->val;
+                    return ans;
+                };
+            } else {
+                long long vall = -Node::INF;
+                splitcnd = [&vall](const Node* t) {
+                    bool ans = ((!t->r && t->val >= vall) ||
+                                (t->r && t->r->isDecreasing && t->val >= t->r->highest && t->r->lowest >= vall));
+                    if (ans)
+                        vall = t->val;
+                    return ans;
+                };
+            }
 
-        auto x = Node::split(t, l);
-        auto y = Node::split(x.second, r - l + 1);
+            auto z = Node::splitByCondition(t, splitcnd);
 
-        std::function<bool(const Node*)> splitcnd;
-        if (tp == type::prev) {
-            long long vall = Node::INF;
-            splitcnd = [&vall](const Node* t) {
-                bool ans = ((!t->r && t->val <= vall) ||
-                            (t->r && t->r->isIncreasing && t->val <= t->r->lowest && t->r->highest <= vall));
-                if (ans)
-                    vall = t->val;
-                return ans;
-            };
-        } else {
-            long long vall = -Node::INF;
-            splitcnd = [&vall](const Node* t) {
-                bool ans = ((!t->r && t->val >= vall) ||
-                            (t->r && t->r->isDecreasing && t->val >= t->r->highest && t->r->lowest >= vall));
-                if (ans)
-                    vall = t->val;
-                return ans;
-            };
-        }
+            if (!z.first) {
+                Node::reverse(z.second);
+                t = Node::merge(z.second);
+                return;
+            }
 
-        auto z = Node::splitByCondition(y.first, splitcnd);
+            long long val = Node::getVal(Node::getNode(z.first, Node::size(z.first) - 1));
 
-        if (!z.first) {
+            std::function<bool(const Node*)> split2cnd;
+            if (tp == type::prev)
+                split2cnd = [val](const Node* t) { return val <= t->val; };
+            else
+                split2cnd = [val](const Node* t) { return val >= t->val; };
+
+            size_t pos = Node::findByCondition(z.second, split2cnd) - 1;
+            long long numberatpos = Node::getVal(Node::getNode(z.second, pos));
+
+            Node::erase(z.first, Node::size(z.first) - 1);
+            Node::insert(z.first, numberatpos, Node::size(z.first));
+            Node::erase(z.second, pos);
+            Node::insert(z.second, val, pos);
             Node::reverse(z.second);
-            t = Node::merge(x.first, z.second, y.second);
-            return;
-        }
 
-        long long val = Node::getVal(Node::getNode(z.first, Node::size(z.first) - 1));
-
-        std::function<bool(const Node*)> split2cnd;
-        if (tp == type::prev)
-            split2cnd = [val](const Node* t) { return val <= t->val; };
-        else
-            split2cnd = [val](const Node* t) { return val >= t->val; };
-
-        size_t pos = Node::findByCondition(z.second, split2cnd) - 1;
-        long long numberatpos = Node::getVal(Node::getNode(z.second, pos));
-
-        Node::erase(z.first, Node::size(z.first) - 1);
-        Node::insert(z.first, numberatpos, Node::size(z.first));
-        Node::erase(z.second, pos);
-        Node::insert(z.second, val, pos);
-        Node::reverse(z.second);
-
-        t = Node::merge(x.first, z.first, z.second, y.second);
+            t = Node::merge(z.first, z.second);
+        });
     }
 };
 
@@ -580,7 +582,7 @@ void handle() {
         query->handle();
 }
 
-void print() {
+void print(std::ostream& cout = std::cout) {
     Node*& t = Task::get().t;
 
     for (auto i : Task::get().result)

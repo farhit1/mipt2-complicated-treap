@@ -570,6 +570,8 @@ void get(std::istream& cin = std::cin) {
         Node::insert(t, x, Node::size(t));
     }
 
+    Task& task = Task::get();
+
     size_t q;
     cin >> q;
     for (size_t i = 0; i < q; ++i) {
@@ -578,31 +580,31 @@ void get(std::istream& cin = std::cin) {
         switch (static_cast<Task::Operation::type>(itype)) {
             case Task::Operation::type::subsegsum:
                 cin >> a >> b;
-                Task::get().addQuery(new Task::Operation::Sum(a, b));
+                task.addQuery(new Task::Operation::Sum(a, b));
                 break;
             case Task::Operation::type::insert:
                 cin >> a >> b;
-                Task::get().addQuery(new Task::Operation::Insert(a, b));
+                task.addQuery(new Task::Operation::Insert(a, b));
                 break;
             case Task::Operation::type::remove:
                 cin >> a;
-                Task::get().addQuery(new Task::Operation::Remove(a));
+                task.addQuery(new Task::Operation::Remove(a));
                 break;
             case Task::Operation::type::subsegset:
                 cin >> a >> b >> c;
-                Task::get().addQuery(new Task::Operation::Subsegset(a, b, c));
+                task.addQuery(new Task::Operation::Subsegset(a, b, c));
                 break;
             case Task::Operation::type::subsegadd:
                 cin >> a >> b >> c;
-                Task::get().addQuery(new Task::Operation::Subsegadd(a, b, c));
+                task.addQuery(new Task::Operation::Subsegadd(a, b, c));
                 break;
             case Task::Operation::type::next_permutation:
                 cin >> a >> b;
-                Task::get().addQuery(new Task::Operation::NextPermutation(a, b));
+                task.addQuery(new Task::Operation::NextPermutation(a, b));
                 break;
             case Task::Operation::type::prev_permutation:
                 cin >> a >> b;
-                Task::get().addQuery(new Task::Operation::PrevPermutation(a, b));
+                task.addQuery(new Task::Operation::PrevPermutation(a, b));
                 break;
         }
     }

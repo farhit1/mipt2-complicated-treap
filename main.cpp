@@ -16,116 +16,117 @@ public:
     typedef mt19937     randomizer;
 
 private:
-    static const long long INF = 1e15;
-    static randomizer rand;
+    static const type _INF = 1e15;
+    static randomizer _getRandomNumber;
 
-    size_type subtreeNodes;
-    prior_type prior;
+    size_type _subtreeNodes;
+    prior_type _prior;
 
-    node_ptr l;
-    node_ptr r;
+    node_ptr _l;
+    node_ptr _r;
 
-    type val;
-    type lowest;
-    type highest;
-    type sum;
+    type _val;
+    type _lowest;
+    type _highest;
+    type _sum;
 
-    bool isIncreasing;
-    bool isDecreasing;
+    bool _isIncreasing;
+    bool _isDecreasing;
 
-    bool toReverse;
+    bool _toReverse;
 
-    void baseUpdate(node_ptr child) {
-        if (!child) return;
-        child->apply();
-        subtreeNodes += child->subtreeNodes;
-        lowest = std::min(lowest, child->lowest);
-        highest = std::max(highest, child->highest);
-        sum += child->sum;
-        isIncreasing &= child->isIncreasing;
-        isDecreasing &= child->isDecreasing;
+    void _baseUpdate(node_ptr t) {
+        if (!t) return;
+        t->_apply();
+        _subtreeNodes += t->_subtreeNodes;
+        _lowest = std::min(_lowest, t->_lowest);
+        _highest = std::max(_highest, t->_highest);
+        _sum += t->_sum;
+        _isIncreasing &= t->_isIncreasing;
+        _isDecreasing &= t->_isDecreasing;
     }
 
-    void reverse() {
-        toReverse ^= true;
+    void _reverse() {
+        _toReverse ^= true;
     }
 
-    void apply() {
-        if (toReverse) {
-            std::swap(l, r);
-            std::swap(isIncreasing, isDecreasing);
-            if (l) l->reverse();
-            if (r) r->reverse();
-            toReverse = false;
+    void _apply() {
+        if (_toReverse) {
+            std::swap(_l, _r);
+            std::swap(_isIncreasing, _isDecreasing);
+            if (_l) _l->_reverse();
+            if (_r) _r->_reverse();
+            _toReverse = false;
         }
 
-        switch (push.pushType) {
+        switch (_push.pushType) {
             case Push::Type::no:
                 break;
             case Push::Type::set:
-                val = lowest = highest = push.val;
-                sum = push.val * subtreeNodes;
-                isIncreasing = isDecreasing = true;
+                _val = _lowest = _highest = _push.val;
+                _sum = _push.val * _subtreeNodes;
+                _isIncreasing = _isDecreasing = true;
                 break;
             case Push::Type::add:
-                val += push.val;
-                lowest += push.val;
-                highest += push.val;
-                sum += push.val * subtreeNodes;
+                _val += _push.val;
+                _lowest += _push.val;
+                _highest += _push.val;
+                _sum += _push.val * _subtreeNodes;
                 break;
         }
-        if (l) addPush(l, push);
-        if (r) addPush(r, push);
-        push = Push();
+        if (_l) addPush(_l, _push);
+        if (_r) addPush(_r, _push);
+        _push = Push();
     }
 
-    void update() {
-        subtreeNodes = 1;
-        lowest = highest = sum = val;
-        isIncreasing = isDecreasing = true;
+    void _update() {
+        _subtreeNodes = 1;
+        _lowest = _highest = _sum = _val;
+        _isIncreasing = _isDecreasing = true;
 
-        if (l) {
-            baseUpdate(l);
-            if (l->highest > val)
-                isIncreasing = false;
-            if (l->lowest < val)
-                isDecreasing = false;
+        if (_l) {
+            _baseUpdate(_l);
+            if (_l->_highest > _val)
+                _isIncreasing = false;
+            if (_l->_lowest < _val)
+                _isDecreasing = false;
         }
-        if (r) {
-            baseUpdate(r);
-            if (r->lowest < val)
-                isIncreasing = false;
-            if (r->highest > val)
-                isDecreasing = false;
+        if (_r) {
+            _baseUpdate(_r);
+            if (_r->_lowest < _val)
+                _isIncreasing = false;
+            if (_r->_highest > _val)
+                _isDecreasing = false;
         }
     }
 
-    size_type getIndex() const {
+    size_type _getIndex() const {
         size_type ind = 0;
-        if (l)
-            ind += l->subtreeNodes;
+        if (_l)
+            ind += _l->_subtreeNodes;
         return ind;
     }
 
-    static node_ptr mergeTwo(node_ptr l, node_ptr r) {
-        if (l) l->apply();
-        if (r) r->apply();
-        if (!l) return r;
-        if (!r) return l;
+    static node_ptr _mergeTwo(node_ptr l, node_ptr _r) {
+        if (l) l->_apply();
+        if (_r) _r->_apply();
+        if (!l) return _r;
+        if (!_r) return l;
 
-        if (l->prior > r->prior) {
-            node_ptr tmp = mergeTwo(l->r, r);
-            l->r = tmp;
-            l->update();
+        if (l->_prior > _r->_prior) {
+            node_ptr tmp = _mergeTwo(l->_r, _r);
+            l->_r = tmp;
+            l->_update();
             return l;
         } else {
-            node_ptr tmp = mergeTwo(l, r->l);
-            r->l = tmp;
-            r->update();
-            return r;
+            node_ptr tmp = _mergeTwo(l, _r->_l);
+            _r->_l = tmp;
+            _r->_update();
+            return _r;
         }
     }
 
+public:
     struct Push {
         enum class Type {
             no, set, add
@@ -138,76 +139,72 @@ private:
                 pushType(pushType),
                 val(val) {}
     };
-    Push push;
 
+private:
+    Push _push;
+
+public:
     static void addPush(node_ptr t, Push newPush) {
         if (!t)
             return;
         if (newPush.pushType == Push::Type::no)
             return;
-        if (t->push.pushType == Push::Type::no || newPush.pushType == Push::Type::set) {
-            t->push = newPush;
+        if (t->_push.pushType == Push::Type::no || newPush.pushType == Push::Type::set) {
+            t->_push = newPush;
             return;
         }
-        t->push.val += newPush.val;
+        t->_push.val += newPush.val;
     }
 
-    friend class Operation;
-
-public:
-    Node() :
-            subtreeNodes(1),
-            prior(rand()),
-            l(nullptr),
-            r(nullptr),
-            isIncreasing(true),
-            isDecreasing(true),
-            toReverse(false) {}
-
-    explicit Node(type v) :
-            Node() {
-        val = v;
-        lowest = v;
-        highest = v;
-        sum = v;
-    }
+    explicit Node(type v = type()) :
+            _subtreeNodes(1),
+            _prior(_getRandomNumber()),
+            _l(nullptr),
+            _r(nullptr),
+            _isIncreasing(true),
+            _isDecreasing(true),
+            _toReverse(false),
+            _val(v),
+            _lowest(v),
+            _highest(v),
+            _sum(v) {}
 
     static void reverse(node_ptr t) {
         if (!t)
             return;
-        t->reverse();
+        t->_reverse();
     }
 
     static size_type size(const node_ptr t) {
-        return (!t ? 0 : t->subtreeNodes);
+        return (!t ? 0 : t->_subtreeNodes);
     }
 
     typedef std::function<bool(const node_ptr)> condition_type;
 
     static std::pair<node_ptr, node_ptr> splitByCondition(node_ptr t, const condition_type& condition) {
         if (!t) return {nullptr, nullptr};
-        t->apply();
-        if (t->l) t->l->apply();
-        if (t->r) t->r->apply();
+        t->_apply();
+        if (t->_l) t->_l->_apply();
+        if (t->_r) t->_r->_apply();
 
         if (condition(t)) {
-            auto tmp = splitByCondition(t->l, condition);
-            t->l = tmp.second;
-            t->update();
+            auto tmp = splitByCondition(t->_l, condition);
+            t->_l = tmp.second;
+            t->_update();
             return std::make_pair(tmp.first, t);
         } else {
-            auto tmp = splitByCondition(t->r, condition);
-            t->r = tmp.first;
-            t->update();
+            auto tmp = splitByCondition(t->_r, condition);
+            t->_r = tmp.first;
+            t->_update();
             return std::make_pair(t, tmp.second);
         }
     }
 
     static std::pair<node_ptr, node_ptr> split(node_ptr t, size_type index) {
         condition_type cnd = [&index](const node_ptr t) {
-            if (t->getIndex() >= index)
+            if (t->_getIndex() >= index)
                 return true;
-            index -= t->getIndex() + 1;
+            index -= t->_getIndex() + 1;
             return false;
         };
         return splitByCondition(t, cnd);
@@ -215,44 +212,29 @@ public:
 
     static size_type findByCondition(node_ptr t, const condition_type& condition) {
         if (!t) return 0;
-        t->apply();
+        t->_apply();
 
         size_type retVal;
         if (condition(t))
-            retVal = findByCondition(t->l, condition);
+            retVal = findByCondition(t->_l, condition);
         else
-            retVal = findByCondition(t->r, condition) + t->getIndex() + 1;
+            retVal = findByCondition(t->_r, condition) + t->_getIndex() + 1;
         return retVal;
     }
 
     static void iterate(node_ptr t, std::vector<type>& tmp) {
-        if (t) t->apply();
+        if (t) t->_apply();
         if (!t) return;
 
-        iterate(t->l, tmp);
-        tmp.push_back(t->val);
-        iterate(t->r, tmp);
+        iterate(t->_l, tmp);
+        tmp.push_back(t->_val);
+        iterate(t->_r, tmp);
     }
 
     static std::vector<type> toVector(node_ptr t) {
         std::vector<type> tmp;
         iterate(t, tmp);
         return tmp;
-    }
-
-    static node_ptr getNode(node_ptr& t, size_type pos) {
-        auto tmp1 = split(t, pos);
-        auto tmp2 = split(tmp1.second, 1);
-        node_ptr node = tmp2.first;
-        t = merge(tmp1.first, merge(tmp2.first, tmp2.second));
-        return node;
-    }
-
-    static void erase(node_ptr& t, size_type pos, size_type count = 1) {
-        auto tmp1 = split(t, pos);
-        auto tmp2 = split(tmp1.second, count);
-        delete tmp2.first;
-        t = merge(tmp1.first, tmp2.second);
     }
 
     static void insert(node_ptr& t, type val, size_type pos) {
@@ -271,80 +253,147 @@ public:
 
     template<typename... Nodes>
     static node_ptr merge(node_ptr l, Nodes... rest) {
-        return mergeTwo(l, merge(rest...));
+        return _mergeTwo(l, merge(rest...));
     }
 
     static type getSum(const node_ptr t) {
         if (!t)
             return type();
-        return t->sum;
+        return t->_sum;
     }
 
     static type getVal(const node_ptr t) {
         if (!t)
             return type();
-        return t->val;
+        return t->_val;
     }
 
     typedef std::function<void(node_ptr&)> operation_type;
 
-    static void operationOnSubsegment(node_ptr& t, size_t l, size_t r, const operation_type& operation) {
+    static void operationOnSubsegment(node_ptr& t, size_type l, size_type _r, const operation_type& operation) {
         auto x = Node::split(t, l);
-        auto y = Node::split(x.second, r - l + 1);
+        auto y = Node::split(x.second, _r - l + 1);
         operation(y.first);
         t = Node::merge(x.first, y.first, y.second);
     }
 
+    static void erase(node_ptr& t, size_type pos, size_type count = 1) {
+        operationOnSubsegment(t, pos, pos + count - 1, [](node_ptr& t) {
+            delete t;
+            t = nullptr;
+        });
+    }
+
+    static node_ptr getNode(node_ptr& t, size_type pos) {
+        node_ptr node;
+        operationOnSubsegment(t, pos, pos, [&node](node_ptr& t){
+            node = t;
+        });
+        return node;
+    }
+
+    static condition_type generateMonotonyCondition(type& vall, bool isIncreasingCnd) {
+        condition_type innerSplitCnd;
+        if (isIncreasingCnd) {
+            vall = Node::_INF;
+            innerSplitCnd = [&vall](const node_ptr t) -> bool {
+                return ((!t->_r && t->_val <= vall) ||
+                        (t->_r && t->_r->_isIncreasing && t->_val <= t->_r->_lowest && t->_r->_highest <= vall));
+            };
+        } else {
+            vall = -Node::_INF;
+            innerSplitCnd = [&vall](const node_ptr t) -> bool {
+                return ((!t->_r && t->_val >= vall) ||
+                        (t->_r && t->_r->_isDecreasing && t->_val >= t->_r->_highest && t->_r->_lowest >= vall));
+            };
+        }
+
+        return [&vall, innerSplitCnd](const node_ptr t) {
+            bool ans = innerSplitCnd(t);
+            if (ans)
+                vall = t->_val;
+            return ans;
+        };
+    }
+
     ~Node() {
-        delete l;
-        delete r;
+        delete _l;
+        delete _r;
     }
 };
 
-Node::randomizer Node::rand = randomizer(0);
+Node::randomizer Node::_getRandomNumber = randomizer(time(0));
 
 typedef Node::node_ptr Tree;
 
 
-class Operation {
-public:
-    enum class type;
-    class Base;
-    class Sum;
-    class Insert;
-    class Remove;
-    class SubsegBase;
-    class Subsegset;
-    class Subsegadd;
-    class PermutationBase;
-    class NextPermutation;
-    class PrevPermutation;
-};
-
 class Task {
-    static std::unique_ptr<Task> ptr;
+public:
+    class Operation {
+    public:
+        enum class type;
+
+        class Base {
+        public:
+            Task* owner;
+            virtual void handle() const = 0;
+        };
+
+        class Sum;
+        class Insert;
+        class Remove;
+        class SubsegBase;
+        class Subsegset;
+        class Subsegadd;
+        class PermutationBase;
+        class NextPermutation;
+        class PrevPermutation;
+    };
+
+private:
+    static std::unique_ptr<Task> _ptr;
     Task() :
-            t(nullptr) {}
+            _tree(nullptr) {}
+
+    Tree _tree;
+    std::vector<std::unique_ptr<Operation::Base>> _queries;
+
+    typedef std::vector<long long> result_type;
+    result_type _result;
 
 public:
-    Tree t;
-    std::vector<std::unique_ptr<Operation::Base>> queries;
-    std::vector<long long> result;
-
     static Task& get() {
-        if (!ptr)
-            ptr.reset(new Task());
-        return *ptr;
+        if (!_ptr)
+            _ptr.reset(new Task());
+        return *_ptr;
     }
 
     ~Task() {
-        delete t;
+        delete _tree;
+    }
+
+    Tree& getTree() {
+        return _tree;
+    }
+
+    void addQuery(Operation::Base* operation) {
+        operation->owner = this;
+        _queries.emplace_back(operation);
+    }
+
+    void runQueries() const {
+        for (auto& query : _queries)
+            query->handle();
+    }
+
+    result_type& getResult() {
+        return _result;
     }
 };
-std::unique_ptr<Task> Task::ptr = nullptr;
 
+std::unique_ptr<Task> Task::_ptr = nullptr;
 
-enum class Operation::type {
+enum class Task::Operation::type {
     subsegsum = 1,
     insert,
     remove,
@@ -354,55 +403,50 @@ enum class Operation::type {
     prev_permutation
 };
 
-class Operation::Base {
-public:
-    virtual void handle() const = 0;
-};
-
-class Operation::Sum : public Base {
-    size_t l, r;
+class Task::Operation::Sum : public Base {
+    size_t _l, _r;
 
 public:
     Sum(size_t l, size_t r) :
-            l(l),
-            r(r) {}
+            _l(l),
+            _r(r) {}
 
     void handle() const override {
-        Node::operationOnSubsegment(Task::get().t, l, r, [this](Tree& t) {
-            Task::get().result.push_back(Node::getSum(t));
+        Node::operationOnSubsegment(owner->getTree(), _l, _r, [this](Tree& t) {
+            owner->getResult().push_back(Node::getSum(t));
         });
     }
 };
 
-class Operation::Insert : public Base {
-    long long x;
-    size_t at;
+class Task::Operation::Insert : public Base {
+    long long _x;
+    size_t _at;
 
 public:
     Insert(long long x, size_t at) :
-            x(x),
-            at(at) {}
+            _x(x),
+            _at(at) {}
 
     void handle() const override {
-        Node::insert(Task::get().t, x, at);
+        Node::insert(owner->getTree(), _x, _at);
     }
 };
 
-class Operation::Remove : public Base {
-    long long pos;
+class Task::Operation::Remove : public Base {
+    long long _pos;
 
 public:
     Remove(long long pos) :
-            pos(pos) {}
+            _pos(pos) {}
 
     void handle() const override {
-        Node::erase(Task::get().t, pos);
+        Node::erase(owner->getTree(), _pos);
     }
 };
 
-class Operation::SubsegBase : public Base {
-    long long x;
-    size_t l, r;
+class Task::Operation::SubsegBase : public Base {
+    long long _x;
+    size_t _l, _r;
 
 protected:
     enum class type {
@@ -412,21 +456,21 @@ protected:
 
 public:
     SubsegBase(long long x, size_t l, size_t r) :
-            x(x),
-            l(l),
-            r(r) {}
+            _x(x),
+            _l(l),
+            _r(r) {}
 
     void handle() const override {
-        Node::operationOnSubsegment(Task::get().t, l, r, [this](Tree& t) {
+        Node::operationOnSubsegment(owner->getTree(), _l, _r, [this](Tree& t) {
             Node::Push::Type opertype = (tp == type::set ?
                                          Node::Push::Type::set :
                                          Node::Push::Type::add);
-            Node::addPush(t, Node::Push(opertype, x));
+            Node::addPush(t, Node::Push(opertype, _x));
         });
     }
 };
 
-class Operation::Subsegset : public SubsegBase {
+class Task::Operation::Subsegset : public SubsegBase {
 public:
     Subsegset(long long x, size_t l, size_t r) :
             SubsegBase(x, l, r) {
@@ -434,7 +478,7 @@ public:
     }
 };
 
-class Operation::Subsegadd : public SubsegBase {
+class Task::Operation::Subsegadd : public SubsegBase {
 public:
     Subsegadd(long long x, size_t l, size_t r) :
             SubsegBase(x, l, r) {
@@ -442,8 +486,8 @@ public:
     }
 };
 
-class Operation::PermutationBase : public Base {
-    size_t l, r;
+class Task::Operation::PermutationBase : public Base {
+    size_t _l, _r;
 
 protected:
     enum class type {
@@ -453,33 +497,14 @@ protected:
 
 public:
     PermutationBase(size_t l, size_t r) :
-            l(l),
-            r(r) {}
+            _l(l),
+            _r(r) {}
 
     void handle() const override {
-        Node::operationOnSubsegment(Task::get().t, l, r, [this](Tree& t) {
-            std::function<bool(const Node*)> splitcnd;
-            if (tp == type::prev) {
-                long long vall = Node::INF;
-                splitcnd = [&vall](const Node* t) {
-                    bool ans = ((!t->r && t->val <= vall) ||
-                                (t->r && t->r->isIncreasing && t->val <= t->r->lowest && t->r->highest <= vall));
-                    if (ans)
-                        vall = t->val;
-                    return ans;
-                };
-            } else {
-                long long vall = -Node::INF;
-                splitcnd = [&vall](const Node* t) {
-                    bool ans = ((!t->r && t->val >= vall) ||
-                                (t->r && t->r->isDecreasing && t->val >= t->r->highest && t->r->lowest >= vall));
-                    if (ans)
-                        vall = t->val;
-                    return ans;
-                };
-            }
-
-            auto z = Node::splitByCondition(t, splitcnd);
+        Node::operationOnSubsegment(owner->getTree(), _l, _r, [this](Tree& t) {
+            long long vall;
+            auto splitCnd = Node::generateMonotonyCondition(vall, tp == type::prev);
+            auto z = Node::splitByCondition(t, splitCnd);
 
             if (!z.first) {
                 Node::reverse(z.second);
@@ -489,11 +514,11 @@ public:
 
             long long val = Node::getVal(Node::getNode(z.first, Node::size(z.first) - 1));
 
-            std::function<bool(const Node*)> split2cnd;
+            std::function<bool(const Tree)> split2cnd;
             if (tp == type::prev)
-                split2cnd = [val](const Node* t) { return val <= t->val; };
+                split2cnd = [val](const Tree t) { return val <= Node::getVal(t); };
             else
-                split2cnd = [val](const Node* t) { return val >= t->val; };
+                split2cnd = [val](const Tree t) { return val >= Node::getVal(t); };
 
             size_t pos = Node::findByCondition(z.second, split2cnd) - 1;
             long long numberatpos = Node::getVal(Node::getNode(z.second, pos));
@@ -509,7 +534,7 @@ public:
     }
 };
 
-class Operation::NextPermutation : public PermutationBase {
+class Task::Operation::NextPermutation : public PermutationBase {
 public:
     NextPermutation(size_t l, size_t r) :
             PermutationBase(l, r) {
@@ -517,7 +542,7 @@ public:
     }
 };
 
-class Operation::PrevPermutation : public PermutationBase {
+class Task::Operation::PrevPermutation : public PermutationBase {
 public:
     PrevPermutation(size_t l, size_t r) :
             PermutationBase(l, r) {
@@ -526,8 +551,16 @@ public:
 };
 
 
+template<typename T>
+void printIterable(const T& a, const char* delimiter, std::ostream& cout = std::cout) {
+    size_t position = 0;
+    for (auto i : a)
+        cout << i << (++position == a.size() ? "" : delimiter);
+}
+
+
 void get(std::istream& cin = std::cin) {
-    Node*& t = Task::get().t;
+    Tree& t = Task::get().getTree();
 
     size_t n;
     cin >> n;
@@ -537,59 +570,52 @@ void get(std::istream& cin = std::cin) {
         Node::insert(t, x, Node::size(t));
     }
 
-    auto& tmp = Task::get().queries;
-
     size_t q;
     cin >> q;
     for (size_t i = 0; i < q; ++i) {
         int itype, a, b, c;
         cin >> itype;
-        switch (static_cast<Operation::type>(itype)) {
-            case Operation::type::subsegsum:
+        switch (static_cast<Task::Operation::type>(itype)) {
+            case Task::Operation::type::subsegsum:
                 cin >> a >> b;
-                tmp.emplace_back(new Operation::Sum(a, b));
+                Task::get().addQuery(new Task::Operation::Sum(a, b));
                 break;
-            case Operation::type::insert:
+            case Task::Operation::type::insert:
                 cin >> a >> b;
-                tmp.emplace_back(new Operation::Insert(a, b));
+                Task::get().addQuery(new Task::Operation::Insert(a, b));
                 break;
-            case Operation::type::remove:
+            case Task::Operation::type::remove:
                 cin >> a;
-                tmp.emplace_back(new Operation::Remove(a));
+                Task::get().addQuery(new Task::Operation::Remove(a));
                 break;
-            case Operation::type::subsegset:
+            case Task::Operation::type::subsegset:
                 cin >> a >> b >> c;
-                tmp.emplace_back(new Operation::Subsegset(a, b, c));
+                Task::get().addQuery(new Task::Operation::Subsegset(a, b, c));
                 break;
-            case Operation::type::subsegadd:
+            case Task::Operation::type::subsegadd:
                 cin >> a >> b >> c;
-                tmp.emplace_back(new Operation::Subsegadd(a, b, c));
+                Task::get().addQuery(new Task::Operation::Subsegadd(a, b, c));
                 break;
-            case Operation::type::next_permutation:
+            case Task::Operation::type::next_permutation:
                 cin >> a >> b;
-                tmp.emplace_back(new Operation::NextPermutation(a, b));
+                Task::get().addQuery(new Task::Operation::NextPermutation(a, b));
                 break;
-            case Operation::type::prev_permutation:
+            case Task::Operation::type::prev_permutation:
                 cin >> a >> b;
-                tmp.emplace_back(new Operation::PrevPermutation(a, b));
+                Task::get().addQuery(new Task::Operation::PrevPermutation(a, b));
                 break;
         }
     }
 }
 
 void handle() {
-    for (auto& query : Task::get().queries)
-        query->handle();
+    Task::get().runQueries();
 }
 
 void print(std::ostream& cout = std::cout) {
-    Node*& t = Task::get().t;
-
-    for (auto i : Task::get().result)
-        cout << i << "\n";
-    auto v = Node::toVector(t);
-    for (size_t i = 0; i < v.size(); i++)
-        cout << v[i] << (i != v.size() - 1 ? " " : "");
+    printIterable(Task::get().getResult(), "\n", cout);
+    cout << '\n';
+    printIterable(Node::toVector(Task::get().getTree()), " ",  cout);
     cout << endl;
 }
 

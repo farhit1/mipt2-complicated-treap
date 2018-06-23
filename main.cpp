@@ -108,22 +108,22 @@ private:
         return ind;
     }
 
-    static node_ptr _mergeTwo(node_ptr l, node_ptr _r) {
+    static node_ptr _mergeTwo(node_ptr l, node_ptr r) {
         if (l) l->_apply();
-        if (_r) _r->_apply();
-        if (!l) return _r;
-        if (!_r) return l;
+        if (r) r->_apply();
+        if (!l) return r;
+        if (!r) return l;
 
-        if (l->_prior > _r->_prior) {
-            node_ptr tmp = _mergeTwo(l->_r, _r);
+        if (l->_prior > r->_prior) {
+            node_ptr tmp = _mergeTwo(l->_r, r);
             l->_r = tmp;
             l->_update();
             return l;
         } else {
-            node_ptr tmp = _mergeTwo(l, _r->_l);
-            _r->_l = tmp;
-            _r->_update();
-            return _r;
+            node_ptr tmp = _mergeTwo(l, r->_l);
+            r->_l = tmp;
+            r->_update();
+            return r;
         }
     }
 
@@ -271,9 +271,9 @@ public:
 
     typedef std::function<void(node_ptr&)> operation_type;
 
-    static void operationOnSubsegment(node_ptr& t, size_type l, size_type _r, const operation_type& operation) {
+    static void operationOnSubsegment(node_ptr& t, size_type l, size_type r, const operation_type& operation) {
         auto x = Node::split(t, l);
-        auto y = Node::split(x.second, _r - l + 1);
+        auto y = Node::split(x.second, r - l + 1);
         operation(y.first);
         t = Node::merge(x.first, y.first, y.second);
     }

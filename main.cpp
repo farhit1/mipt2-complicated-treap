@@ -36,7 +36,8 @@ private:
     bool _toReverse;
 
     void _baseUpdate(node_ptr t) {
-        if (!t) return;
+        if (!t)
+            return;
         t->_apply();
         _subtreeNodes += t->_subtreeNodes;
         _lowest = std::min(_lowest, t->_lowest);

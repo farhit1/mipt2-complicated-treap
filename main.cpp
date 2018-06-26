@@ -383,7 +383,7 @@ public:
     }
 
     void runQueries() const {
-        for (auto& query : _queries)
+        for (auto query : _queries)
             query->handle();
     }
 
@@ -616,9 +616,11 @@ void handle() {
 }
 
 void print(std::ostream& cout = std::cout) {
-    printIterable(Task::get().getResult(), "\n", cout);
+    Task& task = Task::get();
+    
+    printIterable(task.getResult(), "\n", cout);
     cout << '\n';
-    printIterable(Node::toVector(Task::get().getTree()), " ",  cout);
+    printIterable(Node::toVector(task.getTree()), " ",  cout);
     cout << endl;
 }
 
